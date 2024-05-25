@@ -3,9 +3,9 @@
 import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateProductDto } from './dto/create-product.dto';
+import { CreateProductDto, ProductQuery } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { Product } from './entities/product.entity';
+import { Product, ProductCategory } from './entities/product.entity';
 import { User } from '../user/entities/user.entity';
 import { S3Service } from 'src/shared/s3.service';
 
@@ -19,7 +19,7 @@ export class ProductService {
 
   async getAllProducts(): Promise<Product[]> {
     try {
-      return await this.productRepository.find();
+      return await this.productRepository.find({});
     } catch (error) {
       throw new NotFoundException('Products not found');
     }
@@ -33,6 +33,42 @@ export class ProductService {
       return product;
     } catch (error) {
       throw new NotFoundException('Product not found');
+    }
+  }
+
+  async getProductByCategory(
+    category: ProductCategory,
+    query?: ProductQuery,
+  ): Promise<Product[]> {
+    try {
+      const repoQuery: {
+        where?: Record<any, any>;
+        take?: number;
+        skip?: number;
+      } = {
+        where: { category },
+      };
+
+      if (query && query.limit) {
+        repoQuery.take = query.limit;
+      }
+
+      if (query && query.skip) {
+        repoQuery.skip = query.skip;
+      }
+
+      const product = await this.productRepository.find(repoQuery);
+
+      if (!product || product.length === 0) {
+        throw new NotFoundException('No products found for the given category');
+      }
+
+      return product;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new NotFoundException('Something went wrong');
     }
   }
 

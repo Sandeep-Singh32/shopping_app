@@ -13,6 +13,18 @@ import {
 import { ProductCategory } from '../entities/product.entity';
 import { User } from 'src/user/entities/user.entity';
 
+export class ProductQuery {
+  @IsOptional()
+  @Transform(({ value }) => Number(value))
+  @IsNumber()
+  skip: number;
+
+  @IsOptional()
+  @Transform(({ value }) => Number(value))
+  @IsNumber()
+  limit: number;
+}
+
 export class CreateProductDto {
   @IsNotEmpty()
   @MinLength(3)
