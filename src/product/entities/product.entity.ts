@@ -1,5 +1,4 @@
-// product.entity.ts
-
+import { CartEntity } from 'src/cart/entities/cart.entity';
 import { User } from 'src/user/entities/user.entity';
 import {
   Entity,
@@ -54,6 +53,10 @@ export class Product extends BaseEntity {
   @ManyToOne(() => User, (user) => user.products, { cascade: true })
   @JoinColumn()
   owner: User;
+
+  @ManyToOne(() => CartEntity, (cart) => cart.products, { onDelete: 'CASCADE' })
+  @JoinColumn()
+  cart: CartEntity;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

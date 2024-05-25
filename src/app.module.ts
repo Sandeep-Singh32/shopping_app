@@ -6,6 +6,8 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { APP_PIPE } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
 import { DatabaseModule } from './database/database.module';
+import { AddressModule } from './address/address.module';
+import { CartModule } from './cart/cart.module';
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import { DatabaseModule } from './database/database.module';
     ProductModule,
     CategoryModule,
     NotificationsModule,
+    AddressModule,
+    CartModule,
   ],
   controllers: [],
   providers: [{ provide: APP_PIPE, useClass: ValidationPipe }],

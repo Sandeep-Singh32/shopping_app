@@ -12,6 +12,8 @@ import {
 import * as bcrypt from 'bcryptjs';
 import { Profile } from './profile.entity';
 import { Product } from 'src/product/entities/product.entity';
+import { AddressEntity } from 'src/address/entities/address.entity';
+import { CartEntity } from 'src/cart/entities/cart.entity';
 
 export enum UserRole {
   ADMIN = 'ROLE_ADMIN',
@@ -54,6 +56,20 @@ export class User extends BaseEntity {
   @OneToMany(() => Product, (product) => product.owner)
   @JoinColumn()
   products: Product[];
+
+  @OneToMany(() => AddressEntity, (address) => address.user, {
+    cascade: true,
+    eager: true,
+  })
+  @JoinColumn()
+  address: AddressEntity[];
+
+  @OneToOne(() => CartEntity, (cart) => cart.user, {
+    cascade: true,
+    eager: true,
+  })
+  @JoinColumn()
+  cart: CartEntity;
 
   validatePassword(password: string) {
     return bcrypt.compareSync(password, this.password);

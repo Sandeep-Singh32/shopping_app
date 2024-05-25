@@ -12,14 +12,19 @@ import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Profile } from './entities/profile.entity';
+import { CartEntity } from 'src/cart/entities/cart.entity';
+import { S3Service } from 'src/shared/s3.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(Profile) private profileRepo: Repository<Profile>,
+    @InjectRepository(CartEntity)
+    private readonly cartRepository: Repository<CartEntity>,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private S3service: S3Service,
   ) {}
   async create(createUserDto: CreateUserDto, isSeller?: boolean) {
     try {
@@ -39,14 +44,19 @@ export class UserService {
       }
 
       const profile = new Profile();
-
+      const cart = new CartEntity();
       const savedProfile = await this.profileRepo.save(profile);
+      const savedCart = await this.cartRepository.save(cart);
 
       user.profile = savedProfile;
+      user.cart = savedCart;
 
       return await this.userRepo.save(user);
     } catch (error) {
       console.log({ error });
+      if (error instanceof ConflictException) {
+        throw error;
+      }
       throw new HttpException('Something went wrong', 400);
     }
   }
@@ -64,6 +74,8 @@ export class UserService {
         select: ['password', 'email', 'id', 'profile', 'name'],
         relations: {
           profile: false,
+          products: true,
+          cart: true,
         },
       });
 
@@ -107,11 +119,41 @@ export class UserService {
     }
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${updateUserDto} user`;
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto,
+    file: Express.Multer.File,
+  ) {
+    try {
+      const user = await this.findOne(id);
+
+      if (id) {
+        if (file) {
+          const key = `profile/${file.originalname}`;
+
+          const result = await this.S3service.uploadFileToS3(file, key);
+          user.profile.profileImage = result;
+        }
+
+        Object.assign(user, updateUserDto);
+        return await this.userRepo.save(user);
+      }
+    } catch (error) {
+      throw new HttpException('Something went wrong', 500);
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: string) {
+    try {
+      const user = await this.findOne(id);
+
+      if (id) {
+        user.profile.isArchive = true;
+        await this.userRepo.remove(user);
+        return { message: 'deleted successfully' };
+      }
+    } catch (error) {
+      throw new HttpException('Something went wrong', 500);
+    }
   }
 }
