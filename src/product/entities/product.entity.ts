@@ -40,6 +40,9 @@ export class Product extends BaseEntity {
   @Column({ nullable: true })
   imageUrl: string;
 
+  @Column({ default: 0 })
+  totalQuantity: number;
+
   @Column({ default: true })
   isActive: boolean;
 

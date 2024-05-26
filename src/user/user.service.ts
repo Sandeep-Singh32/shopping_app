@@ -112,7 +112,10 @@ export class UserService {
 
   async findOne(id: string): Promise<User> {
     try {
-      return await this.userRepo.findOne({ where: { id } });
+      return await this.userRepo.findOne({
+        where: { id },
+        relationLoadStrategy: 'join',
+      });
     } catch (error) {
       console.log({ error });
       throw new HttpException('Something went wrong', 400);

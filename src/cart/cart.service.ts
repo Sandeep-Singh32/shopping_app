@@ -66,8 +66,19 @@ export class CartService {
       if (!product) {
         throw new NotFoundException('Product not found');
       }
-      cart.products.push(product);
-      cart.totalPrice += product.price;
+
+      const existProductIndex = cart.products.findIndex(
+        (product) => product.id === addProductToCartDto.productId,
+      );
+      if (existProductIndex !== -1) {
+        cart.products[existProductIndex].totalQuantity += 1;
+      } else {
+        product.totalQuantity = 1;
+        cart.products.push(product);
+      }
+
+      cart.totalPrice = Number(cart.totalPrice) + Number(product.price);
+
       return await this.cartRepository.save(cart);
     } catch (error) {
       throw new InternalServerErrorException('Failed to add product to cart');
@@ -85,10 +96,17 @@ export class CartService {
       );
       if (productIndex === -1) {
         throw new NotFoundException('Product not found in cart');
+      } else if (cart.products[productIndex].totalQuantity > 1) {
+        cart.products[productIndex].totalQuantity =
+          Number(cart.products[productIndex].totalQuantity) - 1;
+        cart.totalPrice =
+          Number(cart.totalPrice) - Number(cart.products[productIndex].price);
+        return await this.cartRepository.save(cart);
+      } else {
+        const [product] = cart.products.splice(productIndex, 1);
+        cart.totalPrice = Number(cart.totalPrice) - Number(product.price);
+        return await this.cartRepository.save(cart);
       }
-      const [product] = cart.products.splice(productIndex, 1);
-      cart.totalPrice -= product.price;
-      return await this.cartRepository.save(cart);
     } catch (error) {
       throw new InternalServerErrorException(
         'Failed to remove product from cart',
