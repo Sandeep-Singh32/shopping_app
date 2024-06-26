@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { DatabaseModule } from './database/database.module';
 import { AddressModule } from './address/address.module';
 import { CartModule } from './cart/cart.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { CartModule } from './cart/cart.module';
     NotificationsModule,
     AddressModule,
     CartModule,
+    ChatModule,
   ],
   controllers: [],
   providers: [{ provide: APP_PIPE, useClass: ValidationPipe }],
