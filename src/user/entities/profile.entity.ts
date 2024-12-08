@@ -12,6 +12,7 @@ export enum GenderType {
   MALE = 'male',
   FEMALE = 'female',
   OTHER = 'other',
+  UNKNOWN = 'unknown'
 }
 
 export enum UserStatus {
@@ -31,7 +32,7 @@ export class Profile extends BaseEntity {
   @Column({ type: 'enum', enum: UserStatus, default: UserStatus.HAPPY })
   status: UserStatus;
 
-  @Column({ type: 'enum', enum: GenderType, default: GenderType.MALE })
+  @Column({ type: 'enum', enum: GenderType, default: GenderType.UNKNOWN })
   gender: GenderType;
 
   @Column({ nullable: true })

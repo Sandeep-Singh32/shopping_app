@@ -63,7 +63,6 @@ export class AddressService {
   async getAddressesByUser(user: User): Promise<AddressEntity[]> {
     return this.addressRepository.find({
       where: { user },
-      relations: ['user'],
     });
   }
 }

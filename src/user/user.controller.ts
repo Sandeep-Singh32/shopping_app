@@ -76,4 +76,11 @@ export class UserController {
   remove(@Param('id') id: string) {
     return this.userService.remove(id);
   }
+
+  @Get('/profileDetails')
+  getUserProfileByEntityManager(
+    @UserInfo() user: User,
+  ) {
+    return this.userService.getUserProfileByEntityManager(user);
+  }
 }

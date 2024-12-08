@@ -6,9 +6,9 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto, LoginUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
 import { User, UserRole } from './entities/user.entity';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager, Brackets } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Profile } from './entities/profile.entity';
@@ -25,6 +25,7 @@ export class UserService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private S3service: S3Service,
+    @InjectEntityManager() private entityManager: EntityManager,
   ) {}
   async create(createUserDto: CreateUserDto, isSeller?: boolean) {
     try {
@@ -114,7 +115,7 @@ export class UserService {
     try {
       return await this.userRepo.findOne({
         where: { id },
-        relationLoadStrategy: 'join',
+        // relationLoadStrategy: 'join',
       });
     } catch (error) {
       console.log({ error });
@@ -138,7 +139,8 @@ export class UserService {
           user.profile.profileImage = result;
         }
 
-        Object.assign(user, updateUserDto);
+        Object.assign(user.profile, updateUserDto);
+        console.log('user --', user);
         return await this.userRepo.save(user);
       }
     } catch (error) {
@@ -155,6 +157,156 @@ export class UserService {
         await this.userRepo.remove(user);
         return { message: 'deleted successfully' };
       }
+    } catch (error) {
+      throw new HttpException('Something went wrong', 500);
+    }
+  }
+
+  async getUserProfileByEntityManager(user: User): Promise<any> {
+    try {
+      console.log('inside the entity manager service ');
+      // const userEntityCount = this.entityManager
+      //   .createQueryBuilder()
+      //   .from('user', 'us')
+      //   .select()
+      //   .getCount();
+
+      // const userEntity = this.entityManager
+      //   .createQueryBuilder()
+      //   .from(User, 'us')
+      //   .select('us')
+      //   .getManyAndCount();
+
+      //returns column name as it is defined in the entity
+      // .getManyAndCount(); will return array of two index, index 0 will return data and index 1 will return count of data fetched, for that something needs to added in select
+
+      // const userEntity2 = this.entityManager
+      //   .createQueryBuilder(User, 'user')
+      //   .select()
+      //   .getRawMany();
+
+      //returns user as a prefix before column name is the entity only in case of getRawMany, but getMany will return actual column name
+      //also we can use  .select(['u.name as Name, u.email as email']) to alias this raw many colun name
+
+      // const userEntity2 = this.entityManager
+      //   .createQueryBuilder(User, 'u')
+      //   .select(['u.name', 'u.email'])
+      //   .where('u.id =:id OR u.name =:name ', { id: user.id, name: "Piya Negi" })
+      //   .getMany();
+
+      // const userEntity2 = this.entityManager
+      //   .createQueryBuilder(User, 'u')
+
+      //   .leftJoin('u.profile', 'profile')
+      //   .select(['u.name as Name', 'u.email as email', 'u.role as role', 'profile'])
+      //   .where('(u.id =:id OR u.name =:name)', {
+      //     id: user.id,
+      //     name: 'Piya Negi',
+      //   })
+      //   .andWhere('u.role =:role', { role: UserRole.USER })
+      //   .orderBy('u.name', 'ASC')
+      //   .limit(5)
+      //   .offset(0)
+      //   .getRawMany();
+
+      //only getRawMany works in above since alias is user otherwise we can use getMany
+      //profile object will not be nested
+
+      // const userEntity2 =  this.entityManager
+      //   .createQueryBuilder(User, 'u')
+
+      //   .leftJoin('u.profile', 'profile', 'profile.status =:mood', {mood: 'happy'})
+      //   .select([
+      //     'u',
+      //     'profile',
+      //   ])
+      //   .where('(u.id =:id OR u.name =:name)', {
+      //     id: user.id,
+      //     name: 'Piya Negi',
+      //   })
+      //   .andWhere('u.role =:role', { role: UserRole.USER })
+      //   .orderBy('u.name', 'ASC')
+      //   .limit(5)
+      //   .offset(0)
+      //   .getMany();
+
+      // const userEntity2 = this.userRepo
+      //   .createQueryBuilder('u')
+      //   .innerJoin('u.profile', 'profile', 'profile.status =:mood', {
+      //     mood: 'happy',
+      //   })
+      //   .select(['u', 'profile'])
+      //   // .where('(u.id =:id OR u.name =:name)', {
+      //   //   id: user.id,
+      //   //   name: 'Piya Negi',
+      //   // })
+      //   .andWhere('u.role =:role', { role: UserRole.USER });
+
+      // userEntity2.andWhere(
+      //   new Brackets((qb) => {
+      //     qb.orWhere('u.id =:id ', { id: user.id }).orWhere('u.name LIKE :name', {
+      //       name: '_iya%',
+      //     });
+      //   }),
+      // );
+
+      // userEntity2.orderBy('u.name', 'ASC').limit(5).offset(0);
+
+      // const [response] = await Promise.all([userEntity2]);
+
+      // return await userEntity2.getMany();
+
+      // const userWithProfile = await this.entityManager
+      //   .createQueryBuilder('user', 'u')
+      //   .leftJoinAndMapOne(
+      //     'u.profileData',
+      //     'u.profile',
+      //     'p',
+      //     'p.id =:profileId',
+      //     {
+      //       profileId: '6f84d68d-1de6-4adc-b976-8e1f30550e9a',
+      //     },
+      //   )
+      //   .select(['u', 'p'])
+      //   .where('u.id = :id', { id: user.id })
+      //   .getMany();
+
+      // return userWithProfile;
+
+      //map the data of profile entity to the user entity
+      //profile data is the nested object name, u.profile is the relation with p as alias
+      //p.id should be equal to u.profileId
+
+      // const userWithProfile = await this.entityManager
+      // .createQueryBuilder('user', 'u')
+      // .leftJoinAndMapOne(
+      //   'u.profileData',
+      //   'u.profile',
+      //   'p',
+      //   'p.id =:profileId',
+      //   {
+      //     profileId: '6f84d68d-1de6-4adc-b976-8e1f30550e9a',
+      //   },
+      // )
+      // .select(['u', 'p'])
+      // // .where('u.id = :id', { id: user.id })
+      // .getMany();
+
+      //left join is gonna return all the return despite profileData being null but inner join wil not do it, it will return data if profileData is not empty or not null
+
+      const userWithProfile = await this.entityManager
+        .createQueryBuilder('user', 'u')
+        .innerJoinAndMapOne(
+          'u.profileData',
+          'u.profile',
+          'p',
+          'p.id = u.profileId',
+         
+        )
+        .select(['u', 'p'])
+        // .where('u.id = :id', { id: user.id })
+        .getMany();
+      return userWithProfile;
     } catch (error) {
       throw new HttpException('Something went wrong', 500);
     }
