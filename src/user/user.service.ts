@@ -294,21 +294,37 @@ export class UserService {
 
       //left join is gonna return all the return despite profileData being null but inner join wil not do it, it will return data if profileData is not empty or not null
 
-      const userWithProfile = await this.entityManager
-        .createQueryBuilder('user', 'u')
-        .innerJoinAndMapOne(
-          'u.profileData',
-          'u.profile',
-          'p',
-          'p.id = u.profileId',
-         
-        )
-        .select(['u', 'p'])
-        // .where('u.id = :id', { id: user.id })
-        .getMany();
-      return userWithProfile;
+      // const userWithProfile = await this.entityManager
+      //   .createQueryBuilder('user', 'u')
+      //   .innerJoinAndMapOne(
+      //     'u.profileData',
+      //     'u.profile',
+      //     'p',
+      //     'p.id = u.profileId',
+
+      //   )
+      //   .select(['u', 'p'])
+      //   // .where('u.id = :id', { id: user.id })
+      //   .getMany();
+      // return userWithProfile;
+
+      const result = await this.userRepo
+        .createQueryBuilder('u')
+        .select(['u.role', 'u.name'])
+        .addSelect('COUNT(u.id)', 'userCount')
+        .groupBy('u.role')
+        .getRawMany();
+
+      return result;
     } catch (error) {
       throw new HttpException('Something went wrong', 500);
     }
+  }
+
+  async getUserData(user: User) {
+    try {
+      const response = await this.userRepo.findOne({ where: { id: user.id } });
+      return response;
+    } catch (error) {}
   }
 }
