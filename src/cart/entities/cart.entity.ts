@@ -3,6 +3,8 @@ import {
   Column,
   Entity,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -19,9 +21,17 @@ export class CartEntity extends BaseEntity {
   @JoinColumn()
   user: User;
 
-  @OneToMany(() => Product, (product) => product.cart, {
-    cascade: true,
-    eager: true,
+  // @OneToMany(() => Product, (product) => product.cart, {
+  //   cascade: true,
+  //   eager: true,
+  // })
+  // products: Product[];
+
+  @ManyToMany(() => Product, (product) => product.cart, { eager: true })
+  @JoinTable({
+    name: 'cart_products', // join table that holds many-to-many relationship
+    joinColumns: [{ name: 'cartId', referencedColumnName: 'id' }], // cartId column
+    inverseJoinColumns: [{ name: 'productId', referencedColumnName: 'id' }], // productId column
   })
   products: Product[];
 

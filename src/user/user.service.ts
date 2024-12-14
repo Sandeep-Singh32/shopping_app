@@ -14,6 +14,7 @@ import { ConfigService } from '@nestjs/config';
 import { Profile } from './entities/profile.entity';
 import { CartEntity } from 'src/cart/entities/cart.entity';
 import { S3Service } from 'src/shared/s3.service';
+import { Product } from 'src/product/entities/product.entity';
 
 @Injectable()
 export class UserService {
@@ -22,6 +23,8 @@ export class UserService {
     @InjectRepository(Profile) private profileRepo: Repository<Profile>,
     @InjectRepository(CartEntity)
     private readonly cartRepository: Repository<CartEntity>,
+    @InjectRepository(Product)
+    private readonly productRepo: Repository<Product>,
     private jwtService: JwtService,
     private configService: ConfigService,
     private S3service: S3Service,
@@ -113,10 +116,63 @@ export class UserService {
 
   async findOne(id: string): Promise<User> {
     try {
-      return await this.userRepo.findOne({
-        where: { id },
-        // relationLoadStrategy: 'join',
-      });
+      // return await this.userRepo.findOne({
+      //   where: { id },
+      //   // relationLoadStrategy: 'join',
+      // });
+      // const queryBuilder = this.userRepo
+      //   .createQueryBuilder('u')
+      //   .select()
+      //   .leftJoinAndSelect('u.profile', 'p')
+      //   .leftJoinAndSelect('u.cart', 'c')
+      //   .leftJoinAndSelect('u.address', 'a')
+      //   .leftJoinAndSelect('c.products', 'pr')
+      //   .andWhere('u.id = :id', { id })
+      //   .getOne();
+
+      // const queryBuilder = this.userRepo
+      //   .createQueryBuilder('u')
+      //   // .select('c.totalPrice')
+      //   .leftJoin('profile', 'p', 'p.userId = u.id')
+      //   .leftJoin('cart', 'c', 'c.userId = u.id')
+      //   .leftJoin('addres', 'a', 'a.userId = u.id')
+      //   .leftJoin('cart_products', 'cp', 'cp.cartId = c.id')
+      //   .leftJoin('product', 'pr', 'pr.id = cp.productId')
+      //   .andWhere('u.id = :id', { id })
+      //   .getRawMany();
+
+      const queryBuilder = this.userRepo
+        .createQueryBuilder('u')
+        .leftJoinAndMapMany('u.ad', 'address', 'a', 'a.user_id = u.id')
+        .leftJoinAndMapOne(
+          'u.pf',
+          'profile',
+          'profile',
+          'profile.userId = u.id',
+        )
+        .leftJoinAndMapOne('u.cart', 'cart', 'c', 'c.userId = u.id')
+        .leftJoinAndMapMany(
+          'products',
+          'cart_products',
+          'cp',
+          'cp.cartId = c.id',
+        )
+        .leftJoinAndMapMany(
+          'c.product',
+          'product',
+          'pr',
+          'pr.id = cp.productId',
+        )
+        .andWhere('u.id = :id', { id })
+        .getOne();
+
+      return await queryBuilder;
+
+      // const product = await this.productRepo.findOne({
+      //   where: { id: '09e1b0b5-75cf-43b1-a1d8-7cf7aca90d11' },
+      //   relations: ['cart'], // Automatically loads related carts
+      // });
+      // return product;
     } catch (error) {
       console.log({ error });
       throw new HttpException('Something went wrong', 400);

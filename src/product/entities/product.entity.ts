@@ -9,6 +9,7 @@ import {
   BaseEntity,
   ManyToOne,
   JoinColumn,
+  ManyToMany,
 } from 'typeorm';
 
 export enum ProductCategory {
@@ -57,9 +58,12 @@ export class Product extends BaseEntity {
   @JoinColumn()
   owner: User;
 
-  @ManyToOne(() => CartEntity, (cart) => cart.products, { onDelete: 'CASCADE' })
-  @JoinColumn()
-  cart: CartEntity;
+  // @ManyToOne(() => CartEntity, (cart) => cart.products, { onDelete: 'CASCADE' })
+  // @JoinColumn()
+  // cart: CartEntity;
+
+  @ManyToMany(() => CartEntity, (cart) => cart.products)
+  cart: CartEntity[];
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

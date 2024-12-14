@@ -8,7 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-@Entity({ name: 'addres' })
+@Entity({ name: 'address' })
 export class AddressEntity extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -35,6 +35,6 @@ export class AddressEntity extends BaseEntity {
   zip: string;
 
   @ManyToOne(() => User, (user) => user.address, { onDelete: 'CASCADE' })
-  @JoinColumn()
+  @JoinColumn({ name: 'user_id' })
   user: User;
 }

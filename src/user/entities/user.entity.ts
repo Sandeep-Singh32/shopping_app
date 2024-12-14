@@ -8,6 +8,7 @@ import {
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  VersionColumn,
 } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { Profile } from './profile.entity';
@@ -64,11 +65,17 @@ export class User extends BaseEntity {
   @JoinColumn()
   address: AddressEntity[];
 
+  @VersionColumn({ default: null })
+  version: number;
+
+  @Column({ nullable: true })
+  cart_id: string;
+
   @OneToOne(() => CartEntity, (cart) => cart.user, {
     cascade: true,
     eager: true,
   })
-  @JoinColumn()
+  @JoinColumn({ name: 'cart_id' })
   cart: CartEntity;
 
   validatePassword(password: string) {

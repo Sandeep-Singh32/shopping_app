@@ -8,13 +8,17 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { Product, ProductCategory } from './entities/product.entity';
 import { User } from '../user/entities/user.entity';
 import { S3Service } from 'src/shared/s3.service';
+import { RedisService } from 'src/shared/redis/redis.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class ProductService {
+  private readonly redisKeyPrefix = 'shopping';
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
     private s3Service: S3Service,
+    private readonly redisService: RedisService,
   ) {}
 
   async getAllProducts(): Promise<Product[]> {
@@ -27,9 +31,19 @@ export class ProductService {
 
   async getProductById(id: string): Promise<Product> {
     try {
+      const result = await this.redisService.get<any>(id);
+      console.log(result);
+
+      if (result) {
+        console.log('From redis found this product ---->', result);
+        return result;
+      }
+
+      console.log('product not found in redis ---->', result);
       const product = await this.productRepository.findOneOrFail({
         where: { id },
       });
+      this.redisService.set(id, product);
       return product;
     } catch (error) {
       throw new NotFoundException('Product not found');
@@ -124,5 +138,10 @@ export class ProductService {
     } catch (error) {
       throw new NotFoundException('Product not found');
     }
+  }
+
+  @Cron(CronExpression.EVERY_30_SECONDS)
+  async checkProductInventory() {
+    console.log('Cron job is Checking inventory inside product service ...');
   }
 }
