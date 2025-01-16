@@ -9,6 +9,7 @@ import { DatabaseModule } from './database/database.module';
 import { AddressModule } from './address/address.module';
 import { CartModule } from './cart/cart.module';
 import { ChatModule } from './chat/chat.module';
+import { LoggerService } from './shared/logging.service';
 
 @Module({
   imports: [
@@ -24,5 +25,6 @@ import { ChatModule } from './chat/chat.module';
   ],
   controllers: [],
   providers: [{ provide: APP_PIPE, useClass: ValidationPipe }],
+  exports: [LoggerService]
 })
 export class AppModule {}
